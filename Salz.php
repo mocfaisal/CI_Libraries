@@ -1,20 +1,21 @@
 <?php
 
-if (!defined('BASEPATH')) {
-	exit('No direct script access allowed');
-}
-
 /**
- * Salz Library v1.13.1
+ * Salz Library v1.18.0
  * Created By Mochammad Faisal
  *
  * Create Date 2019-03-01 13:20
- * Last Update 2023-03-17 09:40:25
+ * Last Update 2023-06-15 14:37:31
  *
  *
  */
 
 class Salz {
+	protected $CI;
+	private $db;
+	private $sess;
+	private $userid;
+
 	public function __construct() {
 		date_default_timezone_set("Asia/Jakarta");
 		$this->CI = &get_instance();
@@ -284,7 +285,7 @@ class Salz {
 			// 0755 => without public write
 			// 0777 => with public write
 
-@mkdir($mkdir_path, 0777, true);
+			@mkdir($mkdir_path, 0777, true);
 		}
 
 		// }
@@ -350,7 +351,7 @@ class Salz {
 		if (!is_dir($mkdir_path)) {
 			// check directory is exist
 			// create recursive directory
-@mkdir($mkdir_path, 0777, true);
+			@mkdir($mkdir_path, 0777, true);
 		}
 
 		$this->CI->upload->initialize($configz);
@@ -377,7 +378,7 @@ class Salz {
 
 	// Get Function
 
-	function get_query($query_final) {
+	public function get_query($query_final) {
 		$result = $this->db->query($query_final)->result_array();
 		return $result;
 	}
@@ -497,13 +498,13 @@ class Salz {
 
 			if (isset($whereCond['where_query']) && !empty($whereCond['where_query'])) {
 				/*
-				Example :
+                Example :
 
-				'where_query'=> array(
-				'field_reff' => array(
-					'key'=> 'IN',
-					'value'=> '( SELECT field FROM m_table WHERE delete_status != "1" )'
-				),*/
+                'where_query'=> array(
+                'field_reff' => array(
+                    'key'=> 'IN',
+                    'value'=> '( SELECT field FROM m_table WHERE delete_status != "1" )'
+                ),*/
 
 				foreach ($whereCond['where_query'] as $key => $value) {
 					$key_ = $value['key'];
@@ -1821,46 +1822,48 @@ class Salz {
 	 * @return array   The tree.
 	 */
 	public function buildTree($data = array(), $parentId = 0, $parentIndex = 'parent_id', $idIndex = 'id', $is_counted_children = false) {
-        $branch     = array();
-        $sort_index = 1;
+		$branch     = array();
+		$sort_index = 1;
 
 
-        if (count($data) > 1) {
-            foreach ($data as $element) {
-                $element['sort_index'] = $sort_index;
+		if (count($data) > 1) {
+			foreach ($data as $element) {
+				$element['sort_index'] = $sort_index;
 
-                if ($element[$parentIndex] == $parentId) {
-                    $children = $this->buildTree($data, $element[$idIndex], $parentIndex, $idIndex, $is_counted_children);
+				if ($element[$parentIndex] == $parentId) {
+					$children = $this->buildTree($data, $element[$idIndex], $parentIndex, $idIndex, $is_counted_children);
 
-                    if ($children) {
-                        if ($is_counted_children) {
-                            $element['count_child'] = count($children);
-                        }
-                        $element['children'] = $children;
-                    }
-                    // else{
-                    // $element['count_child'] = 1;
-                    // }
+					if ($children) {
+						if ($is_counted_children) {
+							$element['count_child'] = count($children);
+						}
+						$element['children'] = $children;
+					}
+					// else{
+					// $element['count_child'] = 1;
+					// }
 
-                    $branch[] = $element;
-                }
+					$branch[] = $element;
+				}
 
-                $sort_index++;
-            }
-        } else {
-            return $data;
-        }
+				$sort_index++;
+			}
+		} else {
+			return $data;
+		}
 
-        return $branch;
-    }
+		return $branch;
+	}
 
-	function genTreeList($datas, $parent_id = 0, $depth = 0, $index_id = 'id', $index_parent = 'parent_id') {
+	public function genTreeList($datas, $parent_id = 0, $depth = 0, $index_id = 'id', $index_parent = 'parent_id') {
 		// refference : https://stackoverflow.com/a/14740843/10351006
 		// $datas must be array_values / reset index first
 
 		$ni = count($datas);
 
-		if ($ni === 0 || $depth > 1000) return ''; // Make sure not to have an endless recursion
+		if ($ni === 0 || $depth > 1000) {
+			return '';
+		} // Make sure not to have an endless recursion
 		$tree = '';
 
 		for ($i = 0; $i < $ni; $i++) {
@@ -1885,28 +1888,28 @@ class Salz {
 	 */
 
 	public function parseJsonArray($jsonArray, $parentID = 0, $parentIndex = 'parent_id', $idIndex = 'id', $withOtherData = false) {
-        $return = array();
+		$return = array();
 
-        foreach ($jsonArray as $subArray) {
-            $returnSubSubArray = array();
+		foreach ($jsonArray as $subArray) {
+			$returnSubSubArray = array();
 
-            if (isset($subArray['children'])) {
-                $returnSubSubArray = $this->parseJsonArray($subArray['children'], $subArray[$idIndex], $parentIndex, $idIndex, $withOtherData);
-            }
+			if (isset($subArray['children'])) {
+				$returnSubSubArray = $this->parseJsonArray($subArray['children'], $subArray[$idIndex], $parentIndex, $idIndex, $withOtherData);
+			}
 
-            if ($withOtherData) {
-                unset($subArray['children']);
+			if ($withOtherData) {
+				unset($subArray['children']);
 
-                $return[] = array($idIndex => $subArray[$idIndex], $parentIndex => $parentID, 'other' => $subArray);
-            } else {
-                $return[] = array($idIndex => $subArray[$idIndex], $parentIndex => $parentID);
-            }
+				$return[] = array($idIndex => $subArray[$idIndex], $parentIndex => $parentID, 'other' => $subArray);
+			} else {
+				$return[] = array($idIndex => $subArray[$idIndex], $parentIndex => $parentID);
+			}
 
-            $return = array_merge($return, $returnSubSubArray);
-        }
+			$return = array_merge($return, $returnSubSubArray);
+		}
 
-        return $return;
-    }
+		return $return;
+	}
 
 	/**
 	 *  convert multidimensional array to single array
@@ -2016,23 +2019,45 @@ class Salz {
 	 * @param  string $valueToFind    The value to find
 	 * @return array  ( return array by index result from searching )
 	 */
-	public function arraySearch($dataList = array(), $keyIndexSearch, $valueToFind) {
+	public function arraySearch($dataList = array(), $keyIndexSearch, $valueToFind, $is_return_key = false) {
 		// refference : https://stackoverflow.com/a/24527099/10351006
 		// search data on multiple dimension array
 		// return only 1 array
 
 		$key = array_search($valueToFind, array_column($dataList, $keyIndexSearch));
 
-		return $dataList[$key];
+		if ($is_return_key) {
+			return $key;
+		} else {
+			return $dataList[$key];
+		}
+	}
+
+	public function arraySearchMultiKeyVal($dataList = [], $arrKeyValFind = [], $is_return_key = false) {
+		// Implement from answer : https://stackoverflow.com/q/45124763
+
+		$index = array_keys($dataList, $arrKeyValFind);
+
+		if ($index) {
+			$key = $index[0];
+			if ($is_return_key) {
+				return $key;
+			} else {
+
+				return $dataList[$key];
+			}
+		}
+
+		return false;
 	}
 
 	public function arrayToColumn($arr = array(), $index = 'name', $value = 'value') {
 		//convert list value to column
 
 		/*
-@param$arr = Array()
-@paramindexlike name
-@paramvaluelike value
+        @param$arr = Array()
+        @paramindexlike name
+        @paramvaluelike value
 
          */
 
@@ -2074,7 +2099,7 @@ class Salz {
 
 	// Parse Raw post to Array
 
-	function parse_rawPostToArray($data, $boundary) {
+	public function parse_rawPostToArray($data, $boundary) {
 		// Reff : https://stackoverflow.com/a/3290846/10351006
 
 		$result = array();
@@ -2095,7 +2120,7 @@ class Salz {
 		return $result;
 	}
 
-	function parse_raw_http_request(array &$a_data) {
+	public function parse_raw_http_request(array &$a_data) {
 		// Reff : https://gist.github.com/matriphe/9b869c982c2af0244ba5b175fd5b7250
 
 		// Content-Type must be multipart/data
@@ -2121,13 +2146,14 @@ class Salz {
 
 		// loop data blocks
 		foreach ($a_blocks as $id => $block) {
-			if (empty($block))
+			if (empty($block)) {
 				continue;
+			}
 
 			// you'll have to var_dump $block to understand this and maybe replace \n or \r with a visibile char
 
 			// parse uploaded files
-			if (strpos($block, 'application/octet-stream') !== FALSE) {
+			if (strpos($block, 'application/octet-stream') !== false) {
 				// match "name", then everything after "stream" (optional) except for prepending newlines
 				preg_match("/name=\"([^\"]*)\".*stream[\n|\r]+([^\n\r].*)?$/s", $block, $matches);
 				$a_data['files'][$matches[1]] = $matches[2];
@@ -2142,10 +2168,10 @@ class Salz {
 	}
 
 	/*
-    array sorting
+        array sorting
 
-    sorting array yg hanya bisa dilakukan secara langsung
-    alias pemanggilan method function takan berfungsi
+        sorting array yg hanya bisa dilakukan secara langsung
+        alias pemanggilan method function takan berfungsi
      */
 
 	public function sortArray($data = array(), $opsi = 1) {
@@ -2275,9 +2301,9 @@ class Salz {
 
 	/*
 
-    number formating
+      number formating
 
-     */
+    */
 
 	public function numberFormat($number, $desimal_digit = 0, $desimal_separator = ".", $ribuan_separator = ",") {
 		$decimals      = $desimal_digit;
@@ -2292,7 +2318,7 @@ class Salz {
         $thousands_sep = $this->separator_ribuan;
         }
 
-    }*/
+         }*/
 
 		return number_format($number, $decimals, $dec_point, $thousands_sep);
 	}
@@ -2302,7 +2328,7 @@ class Salz {
 		$dec_point     = $desimal_separator;
 		$thousands_sep = $ribuan_separator;
 
-		/*$init_config = (isset($this->init_config['number']) ? $this->init_config['number'] : array());
+		/* $init_config = (isset($this->init_config['number']) ? $this->init_config['number'] : array());
 
         if(!empty($init_config)){
 
@@ -2310,7 +2336,7 @@ class Salz {
         $thousands_sep = $this->separator_ribuan;
         }
 
-    }*/
+        } */
 
 		return "Rp. " . number_format($number, $decimals, $dec_point, $thousands_sep);
 	}
@@ -2473,6 +2499,38 @@ class Salz {
 		return $hasil;
 	}
 
+	public function phone_format($nomorhp, $kode_telp = '62') {
+		// Reff : https://www.adisumaryadi.com/tutorial/read/php-programming/235/mengubah-nomor-handphone-08xx-ke-format-internasional-62
+
+		//Terlebih dahulu kita trim dl
+		$nomorhp = trim($nomorhp);
+		//bersihkan dari karakter yang tidak perlu
+		$nomorhp = strip_tags($nomorhp);
+		// Berishkan dari spasi
+		$nomorhp = str_replace(" ", "", $nomorhp);
+		// bersihkan dari bentuk seperti  (022) 66677788
+		$nomorhp = str_replace("(", "", $nomorhp);
+		$nomorhp = str_replace(")", "", $nomorhp);
+		// bersihkan dari format yang ada titik seperti 0811.222.333.4
+		$nomorhp = str_replace(".", "", $nomorhp);
+
+		// bersihkan dari format yang ada titik seperti 0811-222-333-4
+		$nomorhp = str_replace("-", "", $nomorhp);
+
+		//cek apakah mengandung karakter + dan 0-9
+		if (!preg_match('/[^+0-9]/', trim($nomorhp))) {
+			// cek apakah no hp karakter 1-3 adalah +$kode_telp. ex : +62
+			if (substr(trim($nomorhp), 0, 3) == '+' . $kode_telp) {
+				$nomorhp = trim($nomorhp);
+			}
+			// cek apakah no hp karakter 1 adalah 0
+			elseif (substr($nomorhp, 0, 1) == '0') {
+				$nomorhp = '+' . $kode_telp . substr($nomorhp, 1);
+			}
+		}
+		return $nomorhp;
+	}
+
 	/*
     roman function
      */
@@ -2525,11 +2583,11 @@ class Salz {
 	}
 
 	/*
-    end of roman function
+        end of roman function
      */
 
 	/*
-    end of number formating
+      end of number formating
      */
 
 	/* Notification */
@@ -2729,6 +2787,70 @@ class Salz {
 
 		if (in_array($algorithm, $algorithmList)) {
 			return hash_hmac($algorithm, $str, $secret);
+		} else {
+			return false;
+		}
+	}
+
+	public function numHash($str, $len = null) {
+		// Reff : https://stackoverflow.com/q/3379471/10351006
+
+		$binhash = md5($str, true);
+		$numhash = unpack('N2', $binhash);
+		$hash = $numhash[1] . $numhash[2];
+
+		if (!empty($len)) {
+			$len = intval($len);
+		}
+
+		if ($len && is_int($len)) {
+			$lenght = $len;
+			$lenght--;
+			$hash = substr($hash, 0, $lenght);
+		}
+		return $hash;
+	}
+
+
+	/* ----------------------------------- TAX ---------------------------------- */
+
+	public function calc_tax(float $tax_val, float $price_to_calc, $type = 1) {
+		$tax_precent = 0;
+		$final_price_with_tax = 0;
+		$final_price_without_tax = 0;
+		$type_txt = '';
+
+		if ($type == 1) {
+			// Calc Include TAX
+			$type_txt = 'Include';
+			$tax_precent = ($tax_val / 100);
+			$final_price_without_tax = ($tax_precent * $price_to_calc);
+			$final_price_with_tax = $price_to_calc + $final_price_without_tax;
+		} elseif ($type == 2) {
+			// Calc Exclude TAX
+			$type_txt = 'Exclude';
+			$tax_precent = (1 + ($tax_val / 100));
+			$final_price_without_tax = ($price_to_calc / $tax_precent);
+			$final_price_with_tax = $price_to_calc + $final_price_without_tax;
+		}
+
+		return [
+			'type' => $type_txt,
+			'tax_precent' => $tax_precent,
+			'tax_price' => $final_price_with_tax,
+			'non_tax_price' => $final_price_without_tax,
+		];
+	}
+
+
+	public function get_config($config_name, $environment = '') {
+		$is_load = $this->CI->config->load($config_name, true);
+		if ($is_load) {
+			$data = $this->CI->config->item($config_name);
+			if (!empty($environment)) {
+				$data = $data[$environment] ?? false ?: false;
+			}
+			return $data;
 		} else {
 			return false;
 		}
