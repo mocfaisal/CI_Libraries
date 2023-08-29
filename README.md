@@ -1,9 +1,14 @@
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+
 # Codeigniter 3 Libraries
 
 Libraries CodeIgniter 3 created by Mochammad Faisal
 
 
+## Requirements
+
+```text
+- PHP v7.4
+```
 ## Installation
 Install Requirements with Composer
 
